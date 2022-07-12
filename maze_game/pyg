@@ -1,0 +1,359 @@
+# Import the module
+import pygame as pg
+pg.font.init()
+# Create the window
+WIDTH = 1040
+HEIGHT = 720
+window = pg.display.set_mode((WIDTH, HEIGHT))
+# Create a clock object
+clock = pg.time.Clock()
+ 
+class ImageSprite(pg.sprite.Sprite):
+    def __init__(self, filename, position, size, speed=(0,0)): # create the constructor (runs when a new object is created)
+        self.image = pg.image.load(filename)
+        self.image = pg.transform.scale(self.image, size)
+        self.rect = pg.Rect(position, size)
+        self.speed = pg.Vector2(speed)
+    def draw(self, surface):
+        surface.blit(self.image, self.rect.topleft)
+
+class Player(ImageSprite):
+    def __init__(self, filename, position, size, speed=(0,0)):
+        super().__init__(filename, position, size, speed)
+        self.original_pos = position
+    def reset(self):
+        self.rect.topleft = self.original_pos
+    def update(self):
+        keys = pg.key.get_pressed()
+        if keys[pg.K_a]:
+            self.rect.x -= self.speed.x
+        if keys[pg.K_d]:
+            self.rect.x += self.speed.x
+        if keys[pg.K_w]:
+            self.rect.y -= self.speed.y
+        if keys[pg.K_s]:
+            self.rect.y += self.speed.y
+ 
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
+        if self.rect.bottom > HEIGHT:
+            self.rect.bottom = HEIGHT
+        if self.rect.top < 0:
+            self.rect.top = 0
+    def is_colliding_with(self, other_sprite):
+        return pg.sprite.collide_rect(self, other_sprite)
+        
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
+
+ 
+class Enemy(ImageSprite):
+    def set_limits(self, A, B):
+        self.A = pg.Vector2(A)
+        self.B = pg.Vector2(B)
+        self.rect.topleft = self.A
+    def update(self):
+        if self.rect.top < self.A.y or self.rect.bottom > self.B.y:
+            self.speed.y *= -1
+        if self.rect.left < self.A.x or self.rect.right > self.B.x:
+            self.speed.x *= -1
+        self.rect.topleft += self.speed
+ 
+class RectSprite(pg.sprite.Sprite):
+    def __init__(self, color, position, size): # create the constructor (runs when a new object is created)
+        self.image = pg.Surface(size)
+        self.image.fill(color)
+        self.rect = pg.Rect(position, size)
+    def draw(self, surface):
+        surface.blit(self.image, self.rect.topleft)
+
+class TextSprite(pg.sprite.Sprite):
+    def __init__(self, text, text_color, pos , font_size, rect_color = None, rect_size = None):
+        self.font = pg.font.Font("Mind.ttf", font_size)
+        self.image = self.font.render(text, True, text_color)
+        self.pos = pos
+        self.rect_color = rect_color
+        self.text_color = text_color
+        self.rect = pg.Rect(pos, rect_size)
+
+
+
+
+
+    def draw(self, surface,  bg=False):
+        if bg:
+            pg.draw.rect(surface, 'red', self.rect)
+        surface.blit(self.image, self.pos)
+    
+    def set_text(self, new_text):
+        self.image = self.font.render(new_text, True, self.text_color)   
+
+lives = 3
+point_counter = TextSprite('Lives: '+str(lives), "springgreen", (720,0), 40,  rect_size=(335, 60), rect_color='crimson')
+game_over = TextSprite('', 'white', (40,200), 40, rect_color="blue", rect_size=(WIDTH, HEIGHT))
+
+player = Player(filename="Loin.jpg", position=(0, 80), size=(30,30), speed=(4,4 ))
+enemy = Enemy(filename="monster.png", position=(300,300), size=(80,80), speed=(4,8))
+enemy.set_limits (A=(100,100), B=(720,500))
+goal = ImageSprite(filename='cat.jpg', position=(65*9+60, 65*9+20), size=(30,30))
+
+
+
+walls = []
+#down
+wall_11 = RectSprite(color='black', position=(65*4, 65), size=(5, 65*1))
+walls.append(wall_11)
+wall_12 = RectSprite(color='black', position=(65*4, 65), size=(5, 65*1))
+walls.append(wall_12)
+wall_13 = RectSprite(color='black', position=(0,5), size=(5, 65))
+walls.append(wall_13)
+wall_14 = RectSprite(color='black', position=(65*5, 5), size=(5, 65))
+walls.append(wall_14)
+wall_15 = RectSprite(color='black', position=(65*9, 5), size=(5, 65))
+walls.append(wall_15)
+wall_16 = RectSprite(color='black', position=(65*10, 5), size=(5, 65*3))
+walls.append(wall_16)
+wall_17 = RectSprite(color='black', position=(0, 65*2), size=(5, 65*9))
+walls.append(wall_17)
+wall_18 = RectSprite(color='black', position=(65, 65*4), size=(5, 65*2))
+walls.append(wall_18)
+wall_19 = RectSprite(color='black', position=(65, 65*4), size=(5, 65*2))
+walls.append(wall_19)
+wall_20 = RectSprite(color='black', position=(65, 65*7), size=(5, 65*4))
+walls.append(wall_20)
+wall_21 = RectSprite(color='black', position=(65*2, 65*5), size=(5, 65*3))
+walls.append(wall_21)
+wall_22 = RectSprite(color='black', position=(65*2, 65*3), size=(5, 65))
+walls.append(wall_22)
+wall_23 = RectSprite(color='black', position=(65*2, 65*9), size=(5, 65))
+walls.append(wall_23)
+wall_24 = RectSprite(color='black', position=(65*3, 65*2), size=(5, 65*2))
+walls.append(wall_24)
+wall_25 = RectSprite(color='black', position=(65*3, 65*6), size=(5, 65))
+walls.append(wall_25)
+wall_26 = RectSprite(color='black', position=(65*3, 65*10), size=(5, 65))
+walls.append(wall_26)
+wall_27 = RectSprite(color='black', position=(65*4, 65), size=(5, 65))
+walls.append(wall_27)
+wall_28 = RectSprite(color='black', position=(65*4, 65*3), size=(5, 65*2))
+walls.append(wall_28)
+wall_29 = RectSprite(color='black', position=(65*4, 65*7), size=(5, 65*3))
+walls.append(wall_29)
+wall_30 = RectSprite(color='black', position=(65*5, 0), size=(5, 65))
+walls.append(wall_30)
+wall_31 = RectSprite(color='black', position=(65*5, 65*4), size=(5, 65))
+walls.append(wall_31)
+wall_32 = RectSprite(color='black', position=(65*5, 65*6), size=(5, 65*3))
+walls.append(wall_32)
+wall_33 = RectSprite(color='black', position=(65*6, 65*1), size=(5, 65*2))
+walls.append(wall_33)
+wall_34 = RectSprite(color='black', position=(65*6, 65*4), size=(5, 65*3))
+walls.append(wall_34)
+wall_35 = RectSprite(color='black', position=(65*6, 65*8), size=(5, 65*2))
+walls.append(wall_35)
+wall_36 = RectSprite(color='black', position=(65*7, 65*3), size=(5, 65*1))
+walls.append(wall_36)
+wall_37 = RectSprite(color='black', position=(65*7, 65*5), size=(5, 65*2))
+walls.append(wall_37)
+wall_38 = RectSprite(color='black', position=(65*7, 65*8), size=(5, 65*1))
+walls.append(wall_38)
+wall_39 = RectSprite(color='black', position=(65*8, 65*3), size=(5, 65*1))
+walls.append(wall_39)
+wall_40 = RectSprite(color='black', position=(65*8, 65*6), size=(5, 65*2))
+walls.append(wall_40)
+wall_41 = RectSprite(color='black', position=(65*8, 65*10), size=(5, 65*1))
+walls.append(wall_41)
+wall_42 = RectSprite(color='black', position=(65*9, 65*0), size=(5, 65*1))
+walls.append(wall_42)
+wall_43 = RectSprite(color='black', position=(65*9, 65*2), size=(5, 65*2))
+walls.append(wall_43)
+wall_44 = RectSprite(color='black', position=(65*9, 65*5), size=(5, 65*1))
+walls.append(wall_44)
+wall_45 = RectSprite(color='black', position=(65*9, 65*8), size=(5, 65*1))
+walls.append(wall_45)
+wall_46 = RectSprite(color='black', position=(65*10, 65*0), size=(5, 65*3))
+walls.append(wall_46)
+wall_47 = RectSprite(color='black', position=(65*10, 65*4), size=(5, 65*2))
+walls.append(wall_47)
+wall_48 = RectSprite(color='black', position=(65*11, 0), size=(5, 65*9))
+walls.append(wall_48)
+wall_49 = RectSprite(color='black', position=(65*11,65*10 ), size=(5, 65))
+walls.append(wall_49)
+
+
+
+
+
+#side
+wall_01 = RectSprite(color='black', position=(0,0), size=(720,5))
+walls.append(wall_01)
+wall_02 = RectSprite(color='black', position=(0, 65), size=(180, 5))
+walls.append(wall_02)
+wall_03 = RectSprite(color='black', position=(65*6, 65), size=(65*3, 5))
+walls.append(wall_03)
+wall_04 = RectSprite(color='black', position=(65*0, 65*2), size=(65*2, 5))
+walls.append(wall_04)
+wall_05 = RectSprite(color='black', position=(65*4, 65*2), size=(65*3, 5))
+walls.append(wall_05)
+wall_06 = RectSprite(color='black', position=(65*8, 65*2), size=(65*1, 5))
+walls.append(wall_06)
+wall_07 = RectSprite(color='black', position=(65*1, 65*3), size=(65*1, 5))
+walls.append(wall_07)
+wall_08 = RectSprite(color='black', position=(65*3, 65*3), size=(65*3+5, 5))
+walls.append(wall_08)
+wall_09 = RectSprite(color='black', position=(65*7, 65*3), size=(65*1, 5))
+walls.append(wall_09)
+wall_001 = RectSprite(color='black', position=(65*9, 65*3), size=(65*1, 5))
+walls.append(wall_001)
+wall_002 = RectSprite(color='black', position=(65*1, 65*4), size=(65*1+5, 5))
+walls.append(wall_002)
+wall_003 = RectSprite(color='black', position=(65*5, 65*4), size=(65*2+5, 5))
+walls.append(wall_003)
+wall_004 = RectSprite(color='black', position=(65*10, 65*4), size=(65*1+5, 5))
+walls.append(wall_004)
+wall_005 = RectSprite(color='black', position=(65*2, 65*5), size=(65*2+5, 5))
+walls.append(wall_005)
+wall_006 = RectSprite(color='black', position=(65*8, 65*5), size=(65*1+5, 5))
+walls.append(wall_006)
+wall_007 = RectSprite(color='black', position=(65*0, 65*6), size=(65*1+5, 5))
+walls.append(wall_007)
+wall_008 = RectSprite(color='black', position=(65*3, 65*6), size=(65*2, 5))
+walls.append(wall_008)
+wall_009 = RectSprite(color='black', position=(65*7, 65*6), size=(65*1, 5))
+walls.append(wall_009)
+wall_100 = RectSprite(color='black', position=(65*9, 65*6), size=(65*1+5, 5))
+walls.append(wall_100)
+wall_101 = RectSprite(color='black', position=(65*3, 65*7), size=(65*1, 5))
+walls.append(wall_101)
+wall_102 = RectSprite(color='black', position=(65*5, 65*7), size=(65*1+5, 5))
+walls.append(wall_102)
+wall_103 = RectSprite(color='black', position=(65*8, 65*7), size=(65*3+5, 5))
+walls.append(wall_103)
+wall_104 = RectSprite(color='black', position=(65*2, 65*8), size=(65*1, 5))
+walls.append(wall_104)
+wall_105 = RectSprite(color='black', position=(65*6, 65*8), size=(65*2+5, 5))
+walls.append(wall_105)
+wall_106 = RectSprite(color='black', position=(65*9, 65*8), size=(65*1, 5))
+walls.append(wall_106)
+wall_107 = RectSprite(color='black', position=(65*2, 65*9), size=(65*2, 5))
+walls.append(wall_107)
+wall_108 = RectSprite(color='black', position=(65*8, 65*9), size=(65*3+5, 5))
+walls.append(wall_108)
+wall_109 = RectSprite(color='black', position=(65*3, 65*10), size=(65*2, 5))
+walls.append(wall_109)
+wall_110 = RectSprite(color='black', position=(65*6, 65*10), size=(65*1, 5))
+walls.append(wall_110)
+wall_111 = RectSprite(color='black', position=(65*9, 65*10), size=(65*2+5, 5))
+walls.append(wall_111)
+wall_112 = RectSprite(color='black', position=(0, 65*11), size=(720, 5))
+walls.append(wall_112)
+# Create the MAIN loop
+while not pg.event.peek(pg.QUIT):
+    window.fill((255,255,255))
+    player.update()
+    enemy.update()
+    for w in walls:
+        if player.is_colliding_with(w):
+            player.reset()
+            lives-=1
+            point_counter.set_text('Lives:' + str(lives))
+            
+    if lives<=0:
+        break
+
+    if player.is_colliding_with(enemy):
+        window.fill((10, 10, 10))
+        player.reset()
+    if player.is_colliding_with(goal):
+        window.fill((20, 20, 20))
+    
+ 
+    player.draw(window)
+    enemy.draw(window)
+    goal.draw(window)
+    wall_01.draw(window)
+    wall_02.draw(window)
+    wall_03.draw(window)
+    wall_04.draw(window)
+    wall_05.draw(window)
+    wall_06.draw(window)
+    wall_07.draw(window)
+    wall_08.draw(window)
+    wall_09.draw(window)
+    wall_001.draw(window)
+    wall_002.draw(window)
+    wall_003.draw(window)
+    wall_004.draw(window)
+    wall_005.draw(window)
+    wall_006.draw(window)
+    wall_007.draw(window)
+    wall_008.draw(window)
+    wall_009.draw(window)
+    wall_100.draw(window)
+    wall_101.draw(window)
+    wall_102.draw(window)
+    wall_103.draw(window)
+    wall_104.draw(window)
+    wall_105.draw(window)
+    wall_106.draw(window)   
+    wall_107.draw(window)   
+    wall_108.draw(window)   
+    wall_109.draw(window)   
+    wall_110.draw(window)   
+    wall_111.draw(window)   
+    wall_112.draw(window)   
+
+    ####################################
+    wall_11.draw(window)
+    wall_12.draw(window)
+    wall_13.draw(window)
+    wall_14.draw(window)
+    wall_15.draw(window)
+    wall_16.draw(window)
+    wall_17.draw(window)
+    wall_18.draw(window)
+    wall_19.draw(window)
+    wall_20.draw(window)
+    wall_21.draw(window)
+    wall_22.draw(window)
+    wall_23.draw(window)
+    wall_24.draw(window)
+    wall_25.draw(window)
+    wall_26.draw(window)
+    wall_27.draw(window)
+    wall_28.draw(window)
+    wall_29.draw(window)
+    wall_30.draw(window)
+    wall_31.draw(window)
+    wall_32.draw(window)
+    wall_33.draw(window)
+    wall_34.draw(window)
+    wall_35.draw(window)
+    wall_36.draw(window)
+    wall_37.draw(window)
+    wall_38.draw(window)
+    wall_39.draw(window)
+    wall_40.draw(window)
+    wall_41.draw(window)
+    wall_42.draw(window)
+    wall_43.draw(window)
+    wall_44.draw(window)
+    wall_45.draw(window)
+    wall_46.draw(window)
+    wall_47.draw(window)
+    wall_48.draw(window)
+    wall_49.draw(window)
+    point_counter.draw(window, bg = True)
+    # update the screen
+    pg.display.update()
+    # tick the clock
+    clock.tick(60)
+window.fill((0, 0, 0))
+game_over.set_text('Game Over')
+game_over.draw(window, bg =  False)
+pg.display.update()
+pg.time.delay(2000)
